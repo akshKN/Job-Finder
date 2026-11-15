@@ -70,6 +70,23 @@ const jooble = {
   ],
 };
 
+const jsearchData = {
+  status: 'OK',
+  data: [
+    { job_id: 'js-1', job_title: 'Senior RPGLE Developer (IBM i)', employer_name: 'Brazos Mutual', job_publisher: 'LinkedIn', job_employment_type: 'FULLTIME', job_apply_link: 'https://example.com/jsearch/js-1', job_description: 'Full-time RPGLE and SQLRPGLE development on IBM i for a policy administration system.', job_is_remote: true, job_posted_at_datetime_utc: ago(0.5), job_city: null, job_state: null, job_min_salary: 105000, job_max_salary: 125000, job_salary_period: 'YEAR' },
+    { job_id: 'js-2', job_title: 'AS400 Developer', employer_name: 'Brazos Mutual', job_publisher: 'Indeed', job_employment_type: 'CONTRACTOR', job_apply_link: 'https://example.com/jsearch/js-2', job_description: 'Contract AS400 role.', job_is_remote: false, job_posted_at_datetime_utc: ago(2), job_city: 'Irving', job_state: 'TX', job_min_salary: 60, job_max_salary: 70, job_salary_period: 'HOUR' },
+  ],
+};
+const jobicyData = { jobs: [
+  { id: 811, url: 'https://example.com/jobicy/811', jobTitle: 'IBM i Systems Analyst', companyName: 'Cedar Loop', jobGeo: 'USA', jobType: ['full-time'], pubDate: ago(3), jobExcerpt: 'Analyst for IBM i applications.', jobDescription: '<p>Analyst for IBM i applications written in RPGLE.</p>', annualSalaryMin: 90000, annualSalaryMax: 105000 },
+  { id: 812, url: 'https://example.com/jobicy/812', jobTitle: 'Growth Marketer', companyName: 'Cedar Loop', jobGeo: 'USA', jobType: ['full-time'], pubDate: ago(1), jobExcerpt: 'Marketing.', jobDescription: '<p>Marketing.</p>' },
+] };
+const remoteokData = [
+  { legal: 'Please link back to Remote OK.' },
+  { id: '5501', position: 'COBOL / AS400 Engineer', company: 'Cedar Loop', location: 'United States', description: '<p>Maintain AS400 batch systems.</p>', url: 'https://example.com/remoteok/5501', date: ago(4), salary_min: 100000, salary_max: 130000 },
+  { id: '5502', position: 'React Developer', company: 'Cedar Loop', location: 'Worldwide', description: '<p>Frontend.</p>', url: 'https://example.com/remoteok/5502', date: ago(1) },
+];
+
 export function respond(url, body) {
   const fail = process.env.FIXTURE_FAIL;
   if (fail && fail.split(',').some((f) => url.includes(f))) throw new Error('HTTP 503');
@@ -77,6 +94,9 @@ export function respond(url, body) {
   if (url.includes('api.lever.co/v0/postings/bluebonnet')) return lever;
   if (url.includes('api.ashbyhq.com/posting-api/job-board/pecanstreet')) return ashby;
   if (url.includes('api.smartrecruiters.com/v1/companies/TrinityRiver/')) return smartrecruiters;
+  if (url.includes('/jsearch/search') || url.includes('jsearch.p.rapidapi.com')) return jsearchData;
+  if (url.includes('jobicy.com/api/')) return jobicyData;
+  if (url.includes('remoteok.com/api')) return remoteokData;
   if (url.includes('jooble.org/api/')) {
     if (!body?.keywords || !body?.location) throw new Error('Jooble needs keywords and location');
     return jooble;

@@ -77,6 +77,7 @@ const run = (extra = {}) =>
       JOBS_CONFIG_DIR: join(ROOT, 'test/config'),
       JOBS_OUT: out,
       JOOBLE_API_KEY: 'x',
+      JSEARCH_API_KEY: 'x',
       ADZUNA_APP_ID: 'x',
       ADZUNA_APP_KEY: 'x',
       USAJOBS_API_KEY: 'x',
@@ -92,7 +93,7 @@ test('fetch: every source parses, merges and screens', () => {
   run();
   const d = load();
   const titles = d.jobs.map((j) => j.title);
-  assert.equal(d.origins.length, 8);
+  assert.equal(d.origins.length, 11);
   assert.ok(d.origins.every((o) => o.status === 'ok'), JSON.stringify(d.origins));
   assert.ok(!titles.includes('Unlisted Secret Role'));
   assert.ok(!titles.includes('Warehouse Associate'), 'fuzzy aggregator hit is screened out');
@@ -107,7 +108,13 @@ test('fetch: every source parses, merges and screens', () => {
   assert.equal(d.jobs.find((j) => j.title === 'Project Coordinator').url, 'https://jobs.smartrecruiters.com/TrinityRiver/tr-77');
   assert.equal(d.jobs.find((j) => j.title === 'Program Analyst').salaryMax, 115079);
   assert.ok(d.jobs.find((j) => j.title === 'Operations Analyst').remote);
-  assert.equal(d.jobs.length, 18);
+  assert.equal(d.jobs.length, 22);
+  const js = d.jobs.find((j) => j.id === 'jsearch:js-1');
+  assert.ok(js.remote && js.via === 'LinkedIn' && js.salaryMax === 125000);
+  const js2 = d.jobs.find((j) => j.id === 'jsearch:js-2');
+  assert.ok(!js2.salaryMin && !matches(js2, { ...DEFAULT_FILTERS, fullTimeOnly: true }), 'hourly pay ignored, contractor screened by full-time filter');
+  assert.ok(titles.includes('IBM i Systems Analyst') && !titles.includes('Growth Marketer'));
+  assert.ok(titles.includes('COBOL / AS400 Engineer') && !titles.includes('React Developer'));
   const jb = d.jobs.find((j) => j.via === 'Jooble');
   assert.equal(jb.title, 'AS/400 RPG Developer');
   assert.equal(jb.salaryMin, 90000);
@@ -138,12 +145,13 @@ test('fetch: a failing source keeps its last postings and is flagged', () => {
   assert.equal(a.firstSeen, b.firstSeen, 'first-seen date survives a refresh');
   const rest = d.origins.find((o) => o.origin === 'adzuna');
   assert.equal(rest.note, 'Resting between checks.');
+  assert.equal(d.origins.find((o) => o.origin === 'jsearch').status, 'ok');
   assert.equal(d.jobs.find((j) => j.title === 'Senior Data Analyst').via, 'Greenhouse');
 });
 
 test('fetch: stops without overwriting when everything fails', () => {
   const before = readFileSync(out, 'utf8');
-  assert.throws(() => run({ FIXTURE_FAIL: 'greenhouse,lever,ashby,smartrecruiters,adzuna,remotive,usajobs,jooble' , JOBS_OUT: out + '.none' }));
+  assert.throws(() => run({ FIXTURE_FAIL: 'greenhouse,lever,ashby,smartrecruiters,adzuna,remotive,usajobs,jooble,jsearch,jobicy,remoteok' , JOBS_OUT: out + '.none' }));
   assert.equal(readFileSync(out, 'utf8'), before);
 });
 

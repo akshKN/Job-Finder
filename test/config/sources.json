@@ -47,6 +47,19 @@
           "location": "Remote"
         }
       ]
+    },
+    "jsearch": {
+      "enabled": true,
+      "minHours": 24,
+      "queries": [
+        "AS400 developer"
+      ]
+    },
+    "jobicy": {
+      "enabled": true
+    },
+    "remoteok": {
+      "enabled": true
     }
   }
 }

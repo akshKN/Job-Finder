@@ -32,6 +32,8 @@ jobs:
       - name: Fetch postings
         run: node scripts/fetch-jobs.mjs
         env:
+          JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
+          JSEARCH_VIA: ${{ vars.JSEARCH_VIA }}
           JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}

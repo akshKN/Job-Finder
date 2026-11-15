@@ -246,11 +246,85 @@ async function remotive() {
   }));
 }
 
+// JSearch: Google for Jobs results (which include listings from LinkedIn, Indeed,
+// ZipRecruiter and employer sites). Free plan is small, so it runs once a day
+// with a short list of searches from config.
+async function jsearch({ cfg, env }) {
+  const rapid = (env.JSEARCH_VIA || '').toLowerCase() === 'rapidapi';
+  const base = rapid ? 'https://jsearch.p.rapidapi.com/search' : 'https://api.openwebninja.com/jsearch/search';
+  const headers = rapid
+    ? { 'X-RapidAPI-Key': env.JSEARCH_API_KEY, 'X-RapidAPI-Host': 'jsearch.p.rapidapi.com' }
+    : { 'x-api-key': env.JSEARCH_API_KEY };
+  const out = [];
+  for (const query of (cfg.queries || []).slice(0, cfg.maxQueries || 3)) {
+    const data = await getJson(`${base}?${q({ query, page: 1, num_pages: 1, country: 'us', date_posted: cfg.datePosted || 'week' })}`, { headers, tries: 1 });
+    for (const j of data.data || []) {
+      const yearly = /year/i.test(j.job_salary_period || '');
+      out.push({
+        sid: j.job_id,
+        title: j.job_title,
+        company: j.employer_name || 'Company not listed',
+        location: [j.job_city, j.job_state].filter(Boolean).join(', ') || j.job_location || (j.job_is_remote ? 'Remote' : ''),
+        remote: j.job_is_remote === true ? true : undefined,
+        salaryMin: yearly ? j.job_min_salary : null,
+        salaryMax: yearly ? j.job_max_salary : null,
+        salaryText: j.job_salary_string || '',
+        postedAt: toISO(j.job_posted_at_datetime_utc),
+        url: j.job_apply_link,
+        type: j.job_employment_type || null,
+        via: j.job_publisher || 'Google Jobs',
+        text: j.job_description || '',
+      });
+    }
+  }
+  return out;
+}
+
+// Jobicy and Remote OK: free remote-job boards, no key. Both ask for a link
+// back to their listing and a credit, which the app shows on each posting.
+async function jobicy() {
+  const data = await getJson('https://jobicy.com/api/v2/remote-jobs?count=50&geo=usa');
+  return (data.jobs || []).map((j) => ({
+    sid: j.id,
+    title: htmlToText(j.jobTitle),
+    company: htmlToText(j.companyName),
+    location: j.jobGeo ? `Remote (${j.jobGeo})` : 'Remote',
+    remote: true,
+    salaryMin: /year/i.test(j.salaryPeriod || 'year') ? Number(j.annualSalaryMin ?? j.salaryMin) || null : null,
+    salaryMax: /year/i.test(j.salaryPeriod || 'year') ? Number(j.annualSalaryMax ?? j.salaryMax) || null : null,
+    postedAt: toISO(j.pubDate),
+    url: j.url,
+    type: Array.isArray(j.jobType) ? j.jobType.join(', ') : j.jobType || null,
+    text: htmlToText(j.jobDescription || j.jobExcerpt),
+  }));
+}
+
+async function remoteok() {
+  const data = await getJson('https://remoteok.com/api');
+  return (Array.isArray(data) ? data : [])
+    .filter((j) => j && j.id && j.position)
+    .map((j) => ({
+      sid: j.id,
+      title: j.position,
+      company: j.company,
+      location: j.location ? `Remote (${j.location})` : 'Remote',
+      remote: true,
+      salaryMin: Number(j.salary_min) || null,
+      salaryMax: Number(j.salary_max) || null,
+      postedAt: toISO(j.date),
+      url: j.url || j.apply_url,
+      text: htmlToText(j.description),
+    }));
+}
+
 const AGGREGATORS = {
+  jsearch: { label: 'JSearch (Google for Jobs)', run: jsearch, needs: ['JSEARCH_API_KEY'], minHours: 24, strict: true },
   jooble: { label: 'Jooble', run: jooble, needs: ['JOOBLE_API_KEY'], minHours: 8 },
   adzuna: { label: 'Adzuna', run: adzuna, needs: ['ADZUNA_APP_ID', 'ADZUNA_APP_KEY'], minHours: 12 },
   usajobs: { label: 'USAJOBS', run: usajobs, needs: ['USAJOBS_API_KEY', 'USAJOBS_EMAIL'], minHours: 6 },
   remotive: { label: 'Remotive', run: remotive, needs: [], minHours: 8 },
+  jobicy: { label: 'Jobicy', run: jobicy, needs: [], minHours: 6 },
+  remoteok: { label: 'Remote OK', run: remoteok, needs: [], minHours: 6 },
 };
 
 // Turns the config into a list of things to fetch.
@@ -277,7 +351,8 @@ export function buildUnits(sources, prefs, env) {
     if (cfg.enabled !== true) continue; // each aggregator must be switched on in config/sources.json
     const missing = a.needs.filter((k) => !env[k]);
     let off = null;
-    if (!keywords.length) off = 'Waiting for job titles in config/preferences.json.';
+    if (id === 'jsearch' && !cfg.queries?.length) off = 'Add search phrases under jsearch.queries in config/sources.json.';
+    else if (!keywords.length) off = 'Waiting for job titles in config/preferences.json.';
     else if (missing.length) off = `Not connected. Add the secret${missing.length > 1 ? 's' : ''} ${missing.join(' and ')}.`;
     units.push({
       origin: id,
@@ -286,6 +361,7 @@ export function buildUnits(sources, prefs, env) {
       kind: 'aggregator',
       priority: id === 'usajobs' ? 1 : 2,
       minHours: cfg.minHours ?? a.minHours,
+      strict: !!a.strict, // small quota: never retry sooner than minHours, even after a failure
       off,
       run: () => a.run({ keywords, prefs, cfg, env }),
       // Aggregator search is fuzzy, so their results are re-checked against the keywords.

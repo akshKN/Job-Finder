@@ -67,7 +67,7 @@ function finalize(raw, unit, now, prefs) {
     postedAt: raw.postedAt || null,
     firstSeen: now,
     url,
-    via: unit.via,
+    via: raw.via || unit.via,
     direct: unit.kind === 'company',
     level: levelOf(raw.title),
     type: raw.type || null,
@@ -130,22 +130,26 @@ async function main() {
     const last = prevStatus.get(u.origin);
     if (u.off) return { ...base, status: 'off', note: u.off, jobs: [] };
 
-    const hoursSince = last?.fetchedAt ? (Date.now() - new Date(last.fetchedAt).getTime()) / 3600000 : Infinity;
-    if (u.minHours && hoursSince < u.minHours && last?.status !== 'error') {
-      return { ...base, status: 'ok', fetchedAt: last.fetchedAt, note: 'Resting between checks.', jobs: old };
+    const since = (t) => (t ? (Date.now() - new Date(t).getTime()) / 3600000 : Infinity);
+    if (u.minHours && u.strict && since(last?.triedAt) < u.minHours) {
+      return { ...last, ...base, jobs: old };
+    }
+    if (u.minHours && since(last?.fetchedAt) < u.minHours && last?.status !== 'error') {
+      return { ...base, status: 'ok', fetchedAt: last.fetchedAt, triedAt: last.triedAt, note: 'Resting between checks.', jobs: old };
     }
     try {
       const raw = await u.run();
       let jobs = raw.map((r) => finalize(r, u, now, prefs)).filter(Boolean);
       if (u.postFilter) jobs = jobs.filter((j) => j.skills.length || u.postFilter.some((k) => keywordMatch(j.title, k)));
       console.log(`ok     ${u.origin}  ${jobs.length} postings`);
-      return { ...base, status: 'ok', fetchedAt: now, found: jobs.length, jobs };
+      return { ...base, status: 'ok', fetchedAt: now, triedAt: now, found: jobs.length, jobs };
     } catch (e) {
       console.log(`FAILED ${u.origin}  ${e.message}`);
       return {
         ...base,
         status: 'error',
         fetchedAt: last?.fetchedAt || null,
+        triedAt: now,
         note: `${e.message} Showing ${old.length} postings from the last good check.`,
         jobs: old,
       };
@@ -176,7 +180,7 @@ async function main() {
 
   const kept = new Map();
   for (const j of jobs) kept.set(j.origin, (kept.get(j.origin) || 0) + 1);
-  const origins = results.map(({ jobs: _drop, ...r }) => ({ ...r, kept: kept.get(r.origin) || 0 }));
+  const origins = results.map(({ jobs: _drop, kept: _old, ...r }) => ({ ...r, kept: kept.get(r.origin) || 0 }));
 
   const out = { generatedAt: now, sample: SAMPLE, defaults: prefs, origins, jobs: jobs.map(({ p, ...j }) => j) };
   await mkdir(dirname(OUT), { recursive: true });

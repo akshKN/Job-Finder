@@ -77,7 +77,7 @@ Not sure which one a company uses? Run `node scripts/find-company.mjs <name>`
 and paste the line it prints. The list starts empty: the current target
 companies (IBM, LTIMindtree, Infosys, Cognizant, Tech Mahindra, CVS Health,
 American Express) run their own careers systems, so their postings reach the
-feed through Jooble and are flagged as target companies there.
+feed through JSearch and are flagged as target companies there.
 
 Employers on Workday, iCIMS or a home-built site can't be watched directly.
 Their jobs still arrive through the aggregators and the LinkedIn / Indeed /
@@ -85,21 +85,26 @@ Google buttons at the bottom of the app.
 
 ## Turn on the job search source (free)
 
-The feed's main source is **Jooble**, a job search engine that covers many job
-boards and employer sites. Its key is free: request one at
-jooble.org/api/about (it arrives by email), then add it under **Settings →
-Secrets and variables → Actions → Secrets** as `JOOBLE_API_KEY`. The free key
-allows 100 requests a day; the feed uses about 30. Jooble shares a short
-excerpt of each posting, and each Apply link opens the posting through Jooble.
+The feed's main source is **JSearch**, which returns Google for Jobs results:
+postings Google has gathered from LinkedIn, Indeed, ZipRecruiter and employer
+sites. Sign up at openwebninja.com (free plan, no card), copy the API key, and
+add it under **Settings → Secrets and variables → Actions → Secrets** as
+`JSEARCH_API_KEY`. If you get the key through RapidAPI instead, also add a
+**variable** `JSEARCH_VIA` with the value `rapidapi`.
+
+The free plan is small (about 100 requests a month), so the feed runs the
+three searches in `config/sources.json` (`jsearch.queries`) once a day. Each
+search returns about ten of the newest matching postings.
 
 Other sources in `config/sources.json`:
 
-- **Remotive** (remote jobs): on, no key needed. Checked three times a day at
-  most, and postings link back to Remotive, as its terms ask.
-- **Adzuna**: off. It now charges for ongoing access. To use it, set
-  `"enabled": true` and add `ADZUNA_APP_ID` and `ADZUNA_APP_KEY`.
-- **USAJOBS** (federal jobs): off. Free key from developer.usajobs.gov; add
-  `USAJOBS_API_KEY` and `USAJOBS_EMAIL` and set `"enabled": true`.
+- **Remotive, Jobicy, Remote OK** (remote jobs): on, no key needed. Postings
+  link back to each board, as their terms ask.
+- **Jooble**: off. Free key (100 requests a day) from jooble.org/api/about,
+  but its form asks for a phone number. To use it, set `"enabled": true` and
+  add `JOOBLE_API_KEY`.
+- **Adzuna**: off. It now charges for ongoing access.
+- **USAJOBS** (federal jobs): off.
 
 ## Turn on the daily email (optional)
 

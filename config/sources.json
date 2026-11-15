@@ -1,8 +1,17 @@
 {
   "companies": [],
   "aggregators": {
-    "jooble": {
+    "jsearch": {
       "enabled": true,
+      "minHours": 24,
+      "datePosted": "week",
+      "queries": ["AS400 developer", "IBM i RPGLE developer", "iSeries RPG programmer"]
+    },
+    "remotive": { "enabled": true, "minHours": 8 },
+    "jobicy": { "enabled": true, "minHours": 6 },
+    "remoteok": { "enabled": true, "minHours": 6 },
+    "jooble": {
+      "enabled": false,
       "minHours": 8,
       "pages": 1,
       "searches": [
@@ -10,7 +19,6 @@
         { "location": "Remote" }
       ]
     },
-    "remotive": { "enabled": true, "minHours": 8 },
     "adzuna": { "enabled": false, "minHours": 12, "pages": 2, "nationwide": true },
     "usajobs": { "enabled": false, "minHours": 6 }
   }
