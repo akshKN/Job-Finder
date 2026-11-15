@@ -94,7 +94,7 @@ export function respond(url, body) {
   if (url.includes('api.lever.co/v0/postings/bluebonnet')) return lever;
   if (url.includes('api.ashbyhq.com/posting-api/job-board/pecanstreet')) return ashby;
   if (url.includes('api.smartrecruiters.com/v1/companies/TrinityRiver/')) return smartrecruiters;
-  if (url.includes('/jsearch/search') || url.includes('jsearch.p.rapidapi.com')) return jsearchData;
+  if (url.includes('/jsearch/search-v2') || url.includes('jsearch.p.rapidapi.com')) return jsearchData;
   if (url.includes('jobicy.com/api/')) return jobicyData;
   if (url.includes('remoteok.com/api')) return remoteokData;
   if (url.includes('jooble.org/api/')) {

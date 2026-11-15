@@ -140,8 +140,9 @@ async function main() {
     try {
       const raw = await u.run();
       let jobs = raw.map((r) => finalize(r, u, now, prefs)).filter(Boolean);
+      const rawCount = raw.length;
       if (u.postFilter) jobs = jobs.filter((j) => j.skills.length || u.postFilter.some((k) => keywordMatch(j.title, k)));
-      console.log(`ok     ${u.origin}  ${jobs.length} postings`);
+      console.log(`ok     ${u.origin}  ${jobs.length} matching of ${rawCount} received`);
       return { ...base, status: 'ok', fetchedAt: now, triedAt: now, found: jobs.length, jobs };
     } catch (e) {
       console.log(`FAILED ${u.origin}  ${e.message}`);

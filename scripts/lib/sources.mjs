@@ -251,14 +251,17 @@ async function remotive() {
 // with a short list of searches from config.
 async function jsearch({ cfg, env }) {
   const rapid = (env.JSEARCH_VIA || '').toLowerCase() === 'rapidapi';
-  const base = rapid ? 'https://jsearch.p.rapidapi.com/search' : 'https://api.openwebninja.com/jsearch/search';
+  const base = rapid ? 'https://jsearch.p.rapidapi.com/search' : 'https://api.openwebninja.com/jsearch/search-v2';
   const headers = rapid
     ? { 'X-RapidAPI-Key': env.JSEARCH_API_KEY, 'X-RapidAPI-Host': 'jsearch.p.rapidapi.com' }
-    : { 'x-api-key': env.JSEARCH_API_KEY };
+    : { 'X-API-Key': env.JSEARCH_API_KEY };
   const out = [];
   for (const query of (cfg.queries || []).slice(0, cfg.maxQueries || 3)) {
     const data = await getJson(`${base}?${q({ query, page: 1, num_pages: 1, country: 'us', date_posted: cfg.datePosted || 'week' })}`, { headers, tries: 1 });
-    for (const j of data.data || []) {
+    // The list sits in `data` on the older endpoint and may sit in `data.jobs` on v2.
+    const list = Array.isArray(data.data) ? data.data : data.data?.jobs || data.jobs || [];
+    if (!list.length) console.log(`       jsearch "${query}": no results (status ${data.status ?? 'n/a'}, keys ${Object.keys(data.data || data).slice(0, 8).join(',')})`);
+    for (const j of list) {
       const yearly = /year/i.test(j.job_salary_period || '');
       out.push({
         sid: j.job_id,
