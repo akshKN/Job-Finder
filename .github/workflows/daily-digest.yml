@@ -1,0 +1,28 @@
+name: Daily email
+
+on:
+  schedule:
+    - cron: '30 13 * * *'   # 7:30 AM Central in winter, 8:30 AM in summer
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  email:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-save nodemailer@6
+      - name: Send new matches
+        run: node scripts/send-digest.mjs
+        env:
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          DIGEST_TO: ${{ secrets.DIGEST_TO }}
+          SITE_URL: ${{ vars.SITE_URL }}

@@ -1,0 +1,10 @@
+{
+  "name": "job-finder",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fetch": "node scripts/fetch-jobs.mjs",
+    "test": "node test/run.mjs",
+    "sample": "JOBS_SAMPLE=1 JOBS_FIXTURES=test/fixtures.mjs JOBS_CONFIG_DIR=test/config JOOBLE_API_KEY=x ADZUNA_APP_ID=x ADZUNA_APP_KEY=x USAJOBS_API_KEY=x USAJOBS_EMAIL=x@example.com node scripts/fetch-jobs.mjs"
+  }
+}

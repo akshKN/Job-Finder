@@ -1,0 +1,25 @@
+{
+  "titleKeywords": ["AS400", "AS/400", "AS-400", "IBM i", "IBMi", "iSeries", "RPGLE", "RPG developer", "RPG programmer"],
+  "skillKeywords": ["AS400", "AS/400", "AS-400", "IBM i", "IBMi", "iSeries", "RPGLE", "SQLRPGLE", "RPG IV", "ILE RPG", "RPG ILE", "RPG/400", "DB2/400"],
+  "keywords": ["AS400", "AS/400", "iSeries", "RPGLE", "IBM i developer"],
+  "excludeKeywords": [],
+  "locations": ["Dallas", "Plano", "Irving", "Richardson", "Frisco", "Addison", "Carrollton", "Farmers Branch", "Coppell", "Lewisville", "Flower Mound", "Allen", "McKinney", "Garland", "Mesquite", "Grapevine", "Southlake", "Westlake", "Arlington", "Fort Worth", "DFW"],
+  "includeRemote": true,
+  "remoteOnly": false,
+  "minSalary": 80000,
+  "requireSalary": false,
+  "maxAgeDays": 30,
+  "levels": [],
+  "fullTimeOnly": true,
+  "hideRestricted": true,
+  "targetCompanies": [
+    { "name": "IBM", "match": ["IBM"] },
+    { "name": "LTIMindtree", "match": ["LTIMindtree", "LTI", "L&T", "Larsen"] },
+    { "name": "Infosys", "match": ["Infosys"] },
+    { "name": "Cognizant", "match": ["Cognizant", "CTS"] },
+    { "name": "Tech Mahindra", "match": ["Tech Mahindra"] },
+    { "name": "CVS Health", "match": ["CVS"] },
+    { "name": "American Express", "match": ["American Express", "Amex"] }
+  ],
+  "country": "us"
+}

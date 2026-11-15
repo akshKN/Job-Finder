@@ -1,0 +1,52 @@
+{
+  "companies": [
+    {
+      "name": "Larkspur Health",
+      "ats": "greenhouse",
+      "token": "larkspur"
+    },
+    {
+      "name": "Bluebonnet Labs",
+      "ats": "lever",
+      "token": "bluebonnet"
+    },
+    {
+      "name": "Pecan Street Analytics",
+      "ats": "ashby",
+      "token": "pecanstreet"
+    },
+    {
+      "name": "Trinity River Bank",
+      "ats": "smartrecruiters",
+      "token": "TrinityRiver"
+    }
+  ],
+  "aggregators": {
+    "adzuna": {
+      "enabled": true,
+      "minHours": 12,
+      "pages": 1
+    },
+    "remotive": {
+      "enabled": true,
+      "minHours": 8
+    },
+    "usajobs": {
+      "enabled": true,
+      "minHours": 6
+    },
+    "jooble": {
+      "enabled": true,
+      "minHours": 8,
+      "searches": [
+        {
+          "location": "Dallas, TX",
+          "radius": 80
+        },
+        {
+          "location": "Remote"
+        }
+      ]
+    }
+  }
+}

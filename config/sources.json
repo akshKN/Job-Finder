@@ -1,0 +1,17 @@
+{
+  "companies": [],
+  "aggregators": {
+    "jooble": {
+      "enabled": true,
+      "minHours": 8,
+      "pages": 1,
+      "searches": [
+        { "location": "Dallas, TX", "radius": 80 },
+        { "location": "Remote" }
+      ]
+    },
+    "remotive": { "enabled": true, "minHours": 8 },
+    "adzuna": { "enabled": false, "minHours": 12, "pages": 2, "nationwide": true },
+    "usajobs": { "enabled": false, "minHours": 6 }
+  }
+}

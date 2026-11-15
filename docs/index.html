@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shortlist</title>
+<meta name="description" content="Fresh job postings from trusted sources, filtered to fit.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Shortlist">
+<meta name="theme-color" content="#f2f4f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101614" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: one scannable column of posting cards under a sticky search bar;
+   the Apply button is the only filled, accent-colored thing on a card. */
+:root {
+  --bg: #f2f4f1;
+  --surface: #ffffff;
+  --ink: #17231f;
+  --muted: #5a6964;
+  --line: #d7ded9;
+  --chip: #e8ede9;
+  --accent: #0f5f4f;
+  --accent-ink: #ffffff;
+  --fresh: #9a4a06;
+  --fresh-bg: #fdecd3;
+  --warn: #a03524;
+  --display: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif;
+  --body: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101614; --surface: #18211e; --ink: #e8efeb; --muted: #9bada6; --line: #2b3833;
+    --chip: #223029; --accent: #62d2b4; --accent-ink: #06231c; --fresh: #f4b76b; --fresh-bg: #3b2b12; --warn: #ff9c8a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101614; --surface: #18211e; --ink: #e8efeb; --muted: #9bada6; --line: #2b3833;
+  --chip: #223029; --accent: #62d2b4; --accent-ink: #06231c; --fresh: #f4b76b; --fresh-bg: #3b2b12; --warn: #ff9c8a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.45 var(--body); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 16px; }
+
+header.bar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); padding: 12px 0 10px; }
+.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.brand h1 { font: 700 26px/1 var(--display); letter-spacing: -0.02em; margin: 0; }
+.brand p { margin: 0; color: var(--muted); font-size: 13px; text-align: right; }
+.search { display: flex; gap: 8px; margin-top: 10px; }
+.search input { flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.btn { height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.small { height: 36px; padding: 0 12px; font-size: 14px; }
+.btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.count { font-variant-numeric: tabular-nums; }
+.pill { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 600; line-height: 20px; text-align: center; }
+
+.tabs { display: flex; gap: 4px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: 1 0 auto; height: 38px; padding: 0 12px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font-weight: 500; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.quick { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 0 2px; }
+
+.notice { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--fresh-bg); color: var(--fresh); font-size: 14px; }
+.notice.bad { background: transparent; border: 1px solid var(--warn); color: var(--warn); }
+
+.list { display: flex; flex-direction: column; gap: 10px; padding: 12px 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.card.fresh { border-left: 4px solid var(--fresh); }
+.card h2 { font: 600 18px/1.25 var(--display); letter-spacing: -0.01em; margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+.where { margin: 0; color: var(--muted); font-size: 15px; overflow-wrap: anywhere; }
+.where b { color: var(--ink); font-weight: 600; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; }
+.tag { padding: 2px 8px; border-radius: 6px; background: var(--chip); font-variant-numeric: tabular-nums; }
+.tag.fresh { background: var(--fresh-bg); color: var(--fresh); font-weight: 600; }
+.tag.target { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.tag.warn { background: none; border: 1px solid var(--warn); color: var(--warn); }
+.tag.plain { background: none; padding-left: 0; padding-right: 0; color: var(--muted); }
+.snip { margin: 0; color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.acts .btn { flex: 1 1 auto; }
+.acts .primary { flex: 1 1 100%; }
+.ask { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px dashed var(--line); font-size: 14px; }
+.ask span { flex: 1 1 140px; }
+
+.empty { padding: 28px 8px; text-align: center; color: var(--muted); }
+.empty b { display: block; color: var(--ink); font: 600 18px var(--display); margin-bottom: 4px; }
+.more { display: flex; justify-content: center; padding-bottom: 12px; }
+
+section.box { margin: 8px 0 14px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; }
+section.box h3 { margin: 0 0 4px; font: 600 16px var(--display); }
+section.box p { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
+.boards { display: flex; flex-direction: column; gap: 10px; }
+.boards div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.boards span { flex: 1 1 120px; font-weight: 500; overflow-wrap: anywhere; }
+details.src summary { cursor: pointer; font-weight: 500; }
+.src ul { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.src li { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: baseline; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.dot.error { background: var(--warn); }
+.dot.off { background: var(--line); }
+.src small { grid-column: 2 / -1; color: var(--muted); }
+footer { padding: 4px 0 40px; color: var(--muted); font-size: 13px; }
+
+.sheet { position: fixed; inset: 0; z-index: 10; display: none; background: rgba(8, 14, 12, 0.45); }
+.sheet.open { display: flex; align-items: flex-end; justify-content: center; }
+.panel { width: 100%; max-width: 720px; max-height: 92%; overflow-y: auto; background: var(--bg); border-radius: 18px 18px 0 0; padding: 16px 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.panel header { display: flex; align-items: center; justify-content: space-between; }
+.panel h2 { margin: 0; font: 700 22px var(--display); }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label, .field legend { font-weight: 600; font-size: 14px; padding: 0; }
+.field small { color: var(--muted); font-size: 13px; }
+.field input[type="text"], .field input[type="number"], .field select { height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); width: 100%; }
+fieldset.field { border: 0; margin: 0; padding: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.check { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 14px; }
+.field .check { font-weight: 400; padding: 8px 12px; align-self: flex-start; }
+.field textarea { min-height: 120px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); width: 100%; font: inherit; font-size: 14px; resize: vertical; }
+.cover { padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.cover b { font: 600 16px var(--display); }
+.cover .tag.miss { background: var(--fresh-bg); color: var(--fresh); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.panel .foot { display: flex; gap: 8px; position: sticky; bottom: -20px; background: var(--bg); padding: 10px 0 20px; margin-bottom: -20px; }
+.panel .foot .primary { flex: 1; }
+@media (max-width: 400px) { .two { grid-template-columns: 1fr; } .brand p { font-size: 12px; } }
+@media (min-width: 760px) { .sheet.open { align-items: center; } .panel { border-radius: 18px; } }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color 0.15s; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Shortlist</h1>
+      <p id="status">Loading postings</p>
+    </div>
+    <div class="search">
+      <input id="q" type="search" placeholder="Search postings" autocomplete="off" aria-label="Search postings">
+      <button class="btn" id="open-filters" type="button">Filters <span class="pill" id="filter-count" hidden></span></button>
+    </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="notices"></div>
+  <div class="quick" id="quick"></div>
+  <div class="list" id="list" aria-live="polite"></div>
+  <div class="more" id="more"></div>
+
+  <section class="box" id="boards-box">
+    <h3>Check the big job sites and target companies too</h3>
+    <p>These sites don't share their listings, so each button opens their own search with your titles and location filled in.</p>
+    <div class="boards" id="boards"></div>
+    <p style="margin:12px 0 0"><button class="btn small" type="button" id="open-add">Found one there? Add it to Saved</button></p>
+  </section>
+
+  <section class="box">
+    <details class="src" id="sources"></details>
+  </section>
+  <footer id="credits"></footer>
+</main>
+
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <form class="panel" id="filters" autocomplete="off">
+    <header>
+      <h2 id="sheet-title">Filters</h2>
+      <button class="btn small" type="button" id="close-filters">Close</button>
+    </header>
+    <div class="field">
+      <label for="f-titles">Job titles</label>
+      <input id="f-titles" type="text" placeholder="data analyst, product manager">
+      <small>Separate with commas. A posting matching any one is shown.</small>
+    </div>
+    <div class="field">
+      <label for="f-exclude">Hide titles containing</label>
+      <input id="f-exclude" type="text" placeholder="intern, contract">
+    </div>
+    <div class="field">
+      <label for="f-locations">Locations</label>
+      <input id="f-locations" type="text" placeholder="Dallas, Plano, TX">
+      <small>City or state, separated by commas. Leave empty for anywhere.</small>
+    </div>
+    <div class="two">
+      <div class="field">
+        <label for="f-remote">Remote jobs</label>
+        <select id="f-remote">
+          <option value="include">Include remote</option>
+          <option value="only">Remote only</option>
+          <option value="exclude">No remote</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-age">Posted within</label>
+        <select id="f-age">
+          <option value="1">1 day</option>
+          <option value="3">3 days</option>
+          <option value="7">7 days</option>
+          <option value="14">14 days</option>
+          <option value="30">30 days</option>
+          <option value="0">Any time</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="f-salary">Minimum salary (per year)</label>
+      <input id="f-salary" type="number" inputmode="numeric" min="0" step="5000" placeholder="No minimum">
+      <label class="check" for="f-require-salary"><input id="f-require-salary" type="checkbox"> Hide postings that don't list pay</label>
+    </div>
+    <div class="field">
+      <label class="check" for="f-fulltime"><input id="f-fulltime" type="checkbox"> Full-time only (hide contract, part-time, internships)</label>
+      <label class="check" for="f-restricted"><input id="f-restricted" type="checkbox"> Hide postings that require US citizenship or a security clearance</label>
+    </div>
+    <fieldset class="field">
+      <legend>Level (estimated from the title)</legend>
+      <div class="row" id="f-levels"></div>
+      <small>Leave all unticked for every level.</small>
+    </fieldset>
+    <div class="foot">
+      <button class="btn" type="button" id="reset-filters">Reset</button>
+      <button class="btn primary" type="submit" id="apply-filters">Show postings</button>
+    </div>
+  </form>
+</div>
+
+<div class="sheet" id="tailor" role="dialog" aria-modal="true" aria-labelledby="tailor-title">
+  <div class="panel">
+    <header>
+      <h2 id="tailor-title">Tailor resume</h2>
+      <button class="btn small" type="button" id="close-tailor">Close</button>
+    </header>
+    <p id="tailor-job" style="margin:0;color:var(--muted)"></p>
+    <div class="field">
+      <label for="t-jd">Job description</label>
+      <textarea id="t-jd" placeholder="Paste the full description from the posting"></textarea>
+      <small id="t-jd-note"></small>
+    </div>
+    <div class="field">
+      <label for="t-resume">Your resume</label>
+      <textarea id="t-resume" placeholder="Paste your resume text here once. It is saved on this device only."></textarea>
+    </div>
+    <div class="cover" id="t-cover"></div>
+    <div class="foot">
+      <a class="btn" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude</a>
+      <button class="btn primary" type="button" id="t-copy">Copy tailoring request</button>
+    </div>
+    <div class="field" id="t-fallback" hidden>
+      <label for="t-prompt">Copy this text and paste it into Claude or another AI assistant</label>
+      <textarea id="t-prompt" readonly></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="add" role="dialog" aria-modal="true" aria-labelledby="add-title">
+  <form class="panel" id="add-form" autocomplete="off">
+    <header>
+      <h2 id="add-title">Add a posting</h2>
+      <button class="btn small" type="button" id="close-add">Close</button>
+    </header>
+    <p style="margin:0;color:var(--muted)">For jobs you find on LinkedIn, Indeed or anywhere else. It goes to Saved, where you can tailor your resume and track the application.</p>
+    <div class="field">
+      <label for="a-url">Link to the posting</label>
+      <input id="a-url" type="text" inputmode="url" placeholder="https://www.linkedin.com/jobs/view/..." required>
+      <small id="a-error" style="color:var(--warn)" hidden>Paste the web address of the posting, starting with https://</small>
+    </div>
+    <div class="field">
+      <label for="a-title">Job title</label>
+      <input id="a-title" type="text" required>
+    </div>
+    <div class="two">
+      <div class="field"><label for="a-company">Company</label><input id="a-company" type="text"></div>
+      <div class="field"><label for="a-location">Location</label><input id="a-location" type="text" placeholder="Remote, Dallas..."></div>
+    </div>
+    <div class="field">
+      <label for="a-text">Job description (optional)</label>
+      <textarea id="a-text" placeholder="Paste it now to use the resume tool later"></textarea>
+    </div>
+    <div class="foot"><button class="btn primary" type="submit">Save posting</button></div>
+  </form>
+</div>
+
+<script type="module">
+import { LEVELS, DEFAULT_FILTERS, splitList, matches, prefsToFilters, jobDate, levelOf, phraseMatch } from './filter.js';
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const KEY = 'shortlist.v1';
+const PAGE = 40;
+
+// What is kept on this device: filters, and saved / applied / hidden postings.
+const store = {
+  data: { filters: null, saved: {}, applied: {}, hidden: {}, lastVisit: 0, prevVisit: 0, resume: '' },
+  load() {
+    try { Object.assign(this.data, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
+  },
+  save() {
+    try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch {}
+  },
+};
+store.load();
+const now = Date.now();
+if (now - (store.data.lastVisit || 0) > 30 * 60000) {
+  store.data.prevVisit = store.data.lastVisit || now - 3 * 86400000;
+  store.data.lastVisit = now;
+  store.save();
+}
+
+const state = { feed: null, tab: 'feed', shown: PAGE, asking: null, filters: { ...DEFAULT_FILTERS }, defaults: { ...DEFAULT_FILTERS } };
+
+const isFresh = (j) => new Date(j.firstSeen || jobDate(j) || 0).getTime() > store.data.prevVisit;
+const money = (n) => (n >= 1000 ? `$${Math.round(n / 1000)}k` : `$${n}`);
+function payText(j) {
+  if (!j.salaryMin && !j.salaryMax) return '';
+  const a = j.salaryMin || j.salaryMax, b = j.salaryMax || j.salaryMin;
+  return a === b ? money(a) : `${money(a)} to ${money(b)}`;
+}
+function ago(iso) {
+  if (!iso) return '';
+  const mins = Math.max(0, (Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 60) return `${Math.max(1, Math.round(mins))} min ago`;
+  if (mins < 1440) return `${Math.round(mins / 60)} hr ago`;
+  const d = Math.round(mins / 1440);
+  return d === 1 ? 'Yesterday' : d < 30 ? `${d} days ago` : `${Math.round(d / 30)} mo ago`;
+}
+const levelName = (id) => (LEVELS.find((l) => l[0] === id) || [, ''])[1];
+
+function activeFilterCount() {
+  const f = state.filters;
+  return [f.titleKeywords.length, f.excludeKeywords.length, f.locations.length, f.remote !== 'include', f.minSalary > 0, f.requireSalary, f.maxAgeDays !== 0, f.levels.length, f.fullTimeOnly, f.hideRestricted, f.targetOnly].filter(Boolean).length;
+}
+
+function lists() {
+  const d = store.data;
+  const all = state.feed?.jobs || [];
+  const live = new Map(all.map((j) => [j.id, j]));
+  const kept = (bag) => Object.entries(bag).sort((a, b) => b[1].at - a[1].at).map(([id, v]) => live.get(id) || { ...v.job, closed: !v.job?.manual });
+  const feed = all.filter((j) => !d.hidden[j.id] && !d.applied[j.id] && matches(j, state.filters));
+  return {
+    feed: state.filters.newOnly ? feed.filter(isFresh) : feed,
+    freshCount: feed.filter(isFresh).length,
+    saved: kept(d.saved).filter((j) => !d.applied[j.id]),
+    applied: kept(d.applied),
+    hidden: kept(d.hidden),
+  };
+}
+
+function card(j) {
+  const d = store.data;
+  const fresh = state.tab === 'feed' && isFresh(j);
+  const tags = [];
+  if (fresh) tags.push('<span class="tag fresh">New</span>');
+  if (j.target) tags.push('<span class="tag target">Target company</span>');
+  if (j.manual) tags.push('<span class="tag">Added by you</span>');
+  if (j.closed) tags.push('<span class="tag">No longer in the feed</span>');
+  if (j.workplace === 'remote' || j.remote) tags.push('<span class="tag">Remote</span>');
+  else if (j.workplace === 'hybrid') tags.push('<span class="tag">Hybrid</span>');
+  const pay = payText(j);
+  if (pay) tags.push(`<span class="tag">${esc(pay)}</span>`);
+  const lvl = levelName(j.level || levelOf(j.title));
+  if (lvl && lvl !== 'Mid') tags.push(`<span class="tag">${esc(lvl)}</span>`);
+  if (j.skills?.length) tags.push(`<span class="tag">Mentions ${esc(j.skills.slice(0, 3).join(', '))}</span>`);
+  if (j.restricted) tags.push('<span class="tag warn">Citizenship or clearance required</span>');
+  const when = d.applied[j.id] ? `Applied ${ago(new Date(d.applied[j.id].at).toISOString())}` : ago(jobDate(j));
+  if (when) tags.push(`<span class="tag plain">${esc(when)}</span>`);
+  const from = j.direct ? `${j.company}'s careers page` : j.via;
+  const also = j.alsoOn?.length ? `, also on ${j.alsoOn.join(', ')}` : '';
+  tags.push(`<span class="tag plain">via ${esc(from + also)}</span>`);
+
+  const id = esc(j.id);
+  const saved = !!d.saved[j.id];
+  let acts;
+  if (state.tab === 'hidden') acts = `<button class="btn small" data-act="unhide" data-id="${id}" type="button">Put back in feed</button>`;
+  else if (state.tab === 'applied') acts = `<a class="btn small" href="${esc(j.url)}" target="_blank" rel="noopener">Open posting</a><button class="btn small" data-act="unapply" data-id="${id}" type="button">Not applied</button>`;
+  else acts = `<a class="btn primary" href="${esc(j.url)}" target="_blank" rel="noopener" data-act="apply" data-id="${id}">Apply</a>
+      <button class="btn" data-act="tailor" data-id="${id}" type="button">Tailor resume</button>
+      <button class="btn" data-act="save" data-id="${id}" type="button" aria-pressed="${saved}">${saved ? 'Saved' : 'Save'}</button>
+      ${state.tab === 'feed' ? `<button class="btn" data-act="hide" data-id="${id}" type="button">Hide</button>` : ''}`;
+  const ask = state.asking === j.id
+    ? `<div class="ask"><span>Did you apply?</span><button class="btn small primary" data-act="applied" data-id="${id}" type="button">Yes, mark applied</button><button class="btn small" data-act="notyet" data-id="${id}" type="button">Not yet</button></div>`
+    : '';
+  return `<article class="card${fresh ? ' fresh' : ''}">
+    <h2>${esc(j.title)}</h2>
+    <p class="where"><b>${esc(j.company)}</b>${j.location ? ' · ' + esc(j.location) : ''}</p>
+    <div class="tags">${tags.join('')}</div>
+    ${j.snippet ? `<p class="snip">${esc(j.snippet)}</p>` : ''}
+    <div class="acts">${acts}</div>${ask}
+  </article>`;
+}
+
+const EMPTY = {
+  feed: ['Nothing matches right now', 'Loosen a filter, or check the big job sites below.'],
+  saved: ['No saved postings', 'Tap Save on a posting to keep it here.'],
+  applied: ['No applications yet', 'After you tap Apply, mark the posting as applied to track it here.'],
+  hidden: ['Nothing hidden', 'Postings you hide land here, in case you change your mind.'],
+};
+
+function render() {
+  const L = lists();
+  const f = state.filters;
+  $('tabs').innerHTML = [['feed', 'Feed'], ['saved', 'Saved'], ['applied', 'Applied'], ['hidden', 'Hidden']]
+    .map(([id, name]) => `<button class="tab" role="tab" type="button" data-tab="${id}" aria-selected="${state.tab === id}">${name} <span class="count">${L[id].length}</span></button>`).join('');
+
+  $('quick').innerHTML = state.tab === 'saved' ? '<button class="btn small" type="button" data-quick="add">Add a posting from another site</button>' : state.tab !== 'feed' ? '' : `
+    <button class="btn small" type="button" data-quick="new" aria-pressed="${f.newOnly}">New since last visit <span class="count">${L.freshCount}</span></button>
+    <button class="btn small" type="button" data-quick="remote" aria-pressed="${f.remote === 'only'}">Remote only</button>
+    <button class="btn small" type="button" data-quick="week" aria-pressed="${f.maxAgeDays === 7}">Past week</button>
+    ${targets().length ? `<button class="btn small" type="button" data-quick="target" aria-pressed="${f.targetOnly}">Target companies</button>` : ''}`;
+
+  const rows = L[state.tab];
+  $('list').innerHTML = rows.length
+    ? rows.slice(0, state.shown).map(card).join('')
+    : `<div class="empty"><b>${EMPTY[state.tab][0]}</b>${EMPTY[state.tab][1]}</div>`;
+  $('more').innerHTML = rows.length > state.shown ? `<button class="btn" type="button" id="show-more">Show ${Math.min(PAGE, rows.length - state.shown)} more</button>` : '';
+
+  const n = activeFilterCount();
+  $('filter-count').hidden = !n;
+  $('filter-count').textContent = n;
+  renderBoards();
+}
+
+const targets = () => (state.feed?.defaults?.targetCompanies || []).map((c) => (typeof c === 'string' ? c : c.name)).filter(Boolean);
+
+function renderBoards() {
+  const f = state.filters;
+  const titles = (f.titleKeywords.length ? f.titleKeywords : splitList(state.feed?.defaults?.keywords)).slice(0, 6);
+  const place = f.remote === 'only' ? 'Remote' : f.locations[0] || '';
+  const e = encodeURIComponent;
+  $('boards').innerHTML = titles.length
+    ? titles.map((t) => {
+        const li = `https://www.linkedin.com/jobs/search/?keywords=${e(t)}${place ? `&location=${e(place)}` : ''}&f_TPR=r604800&sortBy=DD${f.remote === 'only' ? '&f_WT=2' : ''}`;
+        const ind = `https://www.indeed.com/jobs?q=${e(t)}${place ? `&l=${e(place)}` : ''}&fromage=7&sort=date`;
+        const goo = `https://www.google.com/search?q=${e(`${t} jobs ${place}`.trim())}&udm=8`;
+        return `<div><span>${esc(t)}${place ? ` · ${esc(place)}` : ''}</span>
+          <a class="btn small" href="${li}" target="_blank" rel="noopener">LinkedIn</a>
+          <a class="btn small" href="${ind}" target="_blank" rel="noopener">Indeed</a>
+          <a class="btn small" href="https://www.dice.com/jobs?q=${e(t)}${place ? `&location=${e(place)}` : ''}" target="_blank" rel="noopener">Dice</a>
+          <a class="btn small" href="https://www.careeronestop.org/Toolkit/Jobs/find-jobs-results.aspx?keyword=${e(t)}&location=${e(place && place !== 'Remote' ? place : 'US')}" target="_blank" rel="noopener">CareerOneStop</a>
+          <a class="btn small" href="${goo}" target="_blank" rel="noopener">Google</a></div>`;
+      }).join('') + targets().map((c) => {
+        const t = titles[0];
+        return `<div><span>${esc(c)} · ${esc(t)}</span>
+          <a class="btn small" href="https://www.linkedin.com/jobs/search/?keywords=${e(`${t} ${c}`)}&f_TPR=r2592000&sortBy=DD" target="_blank" rel="noopener">LinkedIn</a>
+          <a class="btn small" href="https://www.google.com/search?q=${e(`${c} careers ${t} jobs`)}" target="_blank" rel="noopener">Google</a></div>`;
+      }).join('')
+    : '<p>Add job titles in Filters and the search buttons appear here.</p>';
+}
+
+function renderMeta() {
+  const d = state.feed;
+  const origins = d.origins || [];
+  const bad = origins.filter((o) => o.status === 'error');
+  $('status').innerHTML = `Updated ${esc(ago(d.generatedAt).toLowerCase())}<br><span class="count">${d.jobs.length}</span> open postings`;
+  const notes = [];
+  if (d.sample) notes.push('<p class="notice">These are sample postings from made-up employers. Real ones replace them after the first update.</p>');
+  if ((Date.now() - new Date(d.generatedAt).getTime()) / 3600000 > 12 && !d.sample) notes.push(`<p class="notice bad">The feed last updated ${esc(ago(d.generatedAt).toLowerCase())}. The automatic update may have stopped.</p>`);
+  if (bad.length) notes.push(`<p class="notice bad">${bad.length} source${bad.length > 1 ? 's' : ''} could not be checked on the last update: ${esc(bad.map((o) => o.label).join(', '))}. Details are under Sources.</p>`);
+  $('notices').innerHTML = notes.join('');
+
+  const ok = origins.filter((o) => o.status === 'ok').length;
+  $('sources').innerHTML = `<summary>Sources: ${ok} of ${origins.length} working</summary><ul>${origins.map((o) => `
+    <li><span class="dot ${o.status}"></span><span>${esc(o.label)}${o.kind === 'company' ? ` <span style="color:var(--muted)">(${esc(o.via)})</span>` : ''}</span><span class="count">${o.kept}</span>
+    ${o.status !== 'ok' && o.note ? `<small>${esc(o.note)}</small>` : ''}</li>`).join('')}</ul>`;
+  const credit = origins.filter((o) => o.kind === 'aggregator' && o.status !== 'off').map((o) => (o.origin === 'adzuna' ? 'Jobs by Adzuna' : o.label));
+  $('credits').textContent = `Postings come straight from employers' careers pages${credit.length ? ` and from ${credit.join(', ')}` : ''}. Saved, applied and hidden postings are kept on this device only.`;
+}
+
+// ----- Filters sheet -----
+$('f-levels').innerHTML = LEVELS.map(([id, name]) => `<label class="check" for="f-level-${id}"><input type="checkbox" id="f-level-${id}" value="${id}"> ${name}</label>`).join('');
+function fillForm(f) {
+  $('f-titles').value = f.titleKeywords.join(', ');
+  $('f-exclude').value = f.excludeKeywords.join(', ');
+  $('f-locations').value = f.locations.join(', ');
+  $('f-remote').value = f.remote;
+  $('f-age').value = [1, 3, 7, 14, 30, 0].includes(f.maxAgeDays) ? String(f.maxAgeDays) : '30';
+  $('f-salary').value = f.minSalary || '';
+  $('f-require-salary').checked = f.requireSalary;
+  $('f-fulltime').checked = f.fullTimeOnly;
+  $('f-restricted').checked = f.hideRestricted;
+  for (const [id] of LEVELS) $(`f-level-${id}`).checked = f.levels.includes(id);
+}
+function readForm() {
+  return {
+    ...state.filters,
+    titleKeywords: splitList($('f-titles').value),
+    excludeKeywords: splitList($('f-exclude').value),
+    locations: splitList($('f-locations').value),
+    remote: $('f-remote').value,
+    maxAgeDays: Number($('f-age').value),
+    minSalary: Math.max(0, Number($('f-salary').value) || 0),
+    requireSalary: $('f-require-salary').checked,
+    fullTimeOnly: $('f-fulltime').checked,
+    hideRestricted: $('f-restricted').checked,
+    levels: LEVELS.map(([id]) => id).filter((id) => $(`f-level-${id}`).checked),
+  };
+}
+function setFilters(f, remember = true) {
+  state.filters = f;
+  state.shown = PAGE;
+  if (remember) { store.data.filters = f; store.save(); }
+  render();
+}
+const sheet = (open) => { $('sheet').classList.toggle('open', open); if (open) { fillForm(state.filters); $('f-titles').focus(); } };
+$('open-filters').onclick = () => sheet(true);
+$('close-filters').onclick = () => sheet(false);
+$('sheet').addEventListener('click', (e) => { if (e.target === $('sheet')) sheet(false); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { sheet(false); tailor(null); addSheet(false); } });
+$('filters').addEventListener('submit', (e) => { e.preventDefault(); setFilters(readForm()); sheet(false); });
+$('reset-filters').onclick = () => fillForm({ ...state.defaults, query: state.filters.query });
+$('q').addEventListener('input', (e) => setFilters({ ...state.filters, query: e.target.value.trim() }, false));
+
+$('tabs').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-tab]');
+  if (!t) return;
+  state.tab = t.dataset.tab; state.shown = PAGE; state.asking = null; render();
+});
+$('quick').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-quick]');
+  if (!b) return;
+  if (b.dataset.quick === 'add') { addSheet(true); return; }
+  const f = { ...state.filters };
+  if (b.dataset.quick === 'new') f.newOnly = !f.newOnly;
+  if (b.dataset.quick === 'remote') f.remote = f.remote === 'only' ? 'include' : 'only';
+  if (b.dataset.quick === 'target') f.targetOnly = !f.targetOnly;
+  if (b.dataset.quick === 'week') f.maxAgeDays = f.maxAgeDays === 7 ? state.defaults.maxAgeDays : 7;
+  setFilters(f);
+});
+$('more').addEventListener('click', () => { state.shown += PAGE; render(); });
+
+// ----- Resume tailoring -----
+// Each entry is one skill and the other names it goes by.
+const TERMS = [
+  ['IBM i / AS400', 'AS400', 'AS/400', 'AS-400', 'IBM i', 'IBMi', 'iSeries', 'System i'], ['RPGLE', 'RPG ILE', 'ILE RPG', 'RPG IV'], ['SQLRPGLE', 'embedded SQL'],
+  ['free-format RPG', 'free format RPG', 'fully free', 'RPG free'], ['RPG'], ['CL', 'CLLE', 'CLP', 'CL programming'], ['COBOL', 'COBOL/400'], ['DB2', 'DB2/400', 'DB2 for i'], ['SQL'],
+  ['ILE', 'service programs', 'service program'], ['DDS'], ['subfiles', 'subfile'], ['display files', 'DSPF'], ['printer files', 'PRTF'], ['IFS'], ['stored procedures', 'stored procedure'], ['triggers'], ['journaling'],
+  ['RDi', 'Rational Developer'], ['SEU'], ['PDM'], ['VS Code'], ['Synon', 'CA 2E', '2E'], ['LANSA'], ['Profound UI', 'Profound Logic'], ['Aldon'], ['Turnover'], ['Implementer'], ['Hawkeye'], ['Git', 'GitHub', 'GitLab', 'Bitbucket'], ['Jira'], ['Jenkins'], ['CI/CD'], ['DevOps'],
+  ['REST', 'RESTful'], ['SOAP'], ['JSON'], ['XML'], ['APIs', 'API'], ['web services', 'web service'], ['microservices'], ['MQ', 'MQ Series'], ['EDI'], ['FTP', 'SFTP'],
+  ['SAP'], ['Salesforce'], ['JD Edwards', 'JDE'], ['Infor'], ['BPCS'], ['MAPICS'], ['Manhattan'], ['WMS'], ['ERP'],
+  ['Java'], ['Python'], ['JavaScript'], ['Node.js', 'Node'], ['PHP'], ['.NET', 'C#'], ['Linux'], ['AWS'], ['Azure'], ['mainframe', 'z/OS'], ['JCL'], ['CICS'],
+  ['Agile'], ['Scrum'], ['Kanban'], ['production support'], ['on-call', 'on call'], ['batch jobs', 'batch processing', 'batch'], ['performance tuning', 'query optimization', 'optimization'], ['debugging'], ['code review', 'code reviews'], ['unit testing', 'unit tests'], ['regression testing'], ['impact analysis'], ['root cause', 'root-cause'], ['documentation'], ['requirements'], ['mentoring', 'mentored', 'mentor'], ['modernization', 'modernize'],
+  ['order management', 'order entry'], ['invoicing', 'billing'], ['shipping'], ['inventory'], ['warehouse'], ['supply chain'], ['logistics'], ['retail'], ['banking'], ['insurance'], ['healthcare'], ['manufacturing'], ['finance'],
+];
+const NOT_SKILLS = new Set('IBM US USA EOE EEO PTO LLC INC AND THE FOR YOU OUR WITH ALL NOT ARE HR CEO CTO VP TX NY CA FTE W2 ADA DEI AM PM CST EST PST BS BA MS MBA ID NA ETC OK HQ IT PLUS MUST WILL JOB'.split(' '));
+const has = (text, group) => group.some((t) => phraseMatch(text, t));
+
+function compare(jd, resume) {
+  const groups = TERMS.filter((g) => has(jd, g));
+  const known = new Set(TERMS.flat().map((t) => t.toUpperCase()));
+  const extra = [...new Set(jd.match(/\b[A-Z][A-Z0-9]{1,6}\b/g) || [])].filter((a) => !NOT_SKILLS.has(a) && !known.has(a)).slice(0, 10).map((a) => [a]);
+  const all = [...groups, ...extra];
+  return { covered: all.filter((g) => has(resume, g)).map((g) => g[0]), missing: all.filter((g) => !has(resume, g)).map((g) => g[0]) };
+}
+
+function tailorRequest(job, jd, resume) {
+  return `Tailor my resume for the job below so it reads well to an applicant tracking system and to a recruiter.
+
+Rules:
+- Use only the experience, skills, employers and dates already in my resume. Do not invent or exaggerate anything.
+- Put the most relevant work first, and use the posting's own wording where it truthfully describes what I did.
+- Keep plain, single-column formatting with standard section headings, and keep it to one page.
+- After the resume, list each change you made and why.
+- Then list anything the posting asks for that my resume does not show, so I can tell you whether I have it.
+- This is a draft for my review. Do not treat it as final until I approve it.
+
+JOB: ${job.title} at ${job.company}${job.location ? ` (${job.location})` : ''}
+${job.url}
+
+JOB DESCRIPTION:
+${jd.trim()}
+
+MY RESUME:
+${resume.trim()}`;
+}
+
+let tailorJob = null;
+function renderCover() {
+  const jd = $('t-jd').value, resume = $('t-resume').value;
+  $('t-fallback').hidden = true;
+  if (jd.trim().length < 40 || resume.trim().length < 40) {
+    $('t-cover').innerHTML = '<span>Add the job description and your resume to see which of the posting\'s key terms your resume already covers.</span>';
+    return;
+  }
+  const { covered, missing } = compare(jd, resume);
+  const chips = (list, cls) => list.map((t) => `<span class="tag ${cls}">${esc(t)}</span>`).join('');
+  $('t-cover').innerHTML = `<b>Your resume covers ${covered.length} of ${covered.length + missing.length} key terms in this posting</b>
+    ${missing.length ? `<span>Not in your resume:</span><div class="tags">${chips(missing, 'miss')}</div><span>Add one only if you have really done it. A tailored draft will reword what is true, not add what is missing.</span>` : ''}
+    ${covered.length ? `<span>Already covered:</span><div class="tags">${chips(covered, '')}</div>` : ''}`;
+}
+function tailor(job) {
+  tailorJob = job;
+  $('tailor').classList.toggle('open', !!job);
+  if (!job) return;
+  $('tailor-job').textContent = `${job.title} at ${job.company}`;
+  const text = job.text || job.snippet || '';
+  $('t-jd').value = text;
+  $('t-jd-note').textContent = text.length < 700 ? 'This source only shares a short excerpt. Open the posting and paste its full description here for a proper check.' : 'Taken from the posting. Edit or replace it if anything is missing.';
+  $('t-resume').value = store.data.resume || '';
+  $('t-copy').textContent = 'Copy tailoring request';
+  renderCover();
+}
+$('close-tailor').onclick = () => tailor(null);
+$('tailor').addEventListener('click', (e) => { if (e.target === $('tailor')) tailor(null); });
+$('t-jd').addEventListener('input', renderCover);
+$('t-resume').addEventListener('input', () => { store.data.resume = $('t-resume').value; store.save(); renderCover(); });
+$('t-copy').onclick = async () => {
+  const jd = $('t-jd').value, resume = $('t-resume').value;
+  if (jd.trim().length < 40 || resume.trim().length < 40) { $('t-copy').textContent = 'Add both texts first'; return; }
+  const text = tailorRequest(tailorJob, jd, resume);
+  try {
+    await navigator.clipboard.writeText(text);
+    $('t-copy').textContent = 'Copied. Paste it into Claude';
+  } catch {
+    $('t-prompt').value = text;
+    $('t-fallback').hidden = false;
+    $('t-prompt').focus();
+    $('t-prompt').select();
+  }
+};
+
+// ----- Add a posting found elsewhere -----
+const SITES = [['linkedin.', 'LinkedIn'], ['indeed.', 'Indeed'], ['dice.', 'Dice'], ['glassdoor.', 'Glassdoor'], ['ziprecruiter.', 'ZipRecruiter']];
+function addSheet(open) {
+  $('add').classList.toggle('open', open);
+  if (open) { $('add-form').reset(); $('a-error').hidden = true; $('a-url').focus(); }
+}
+$('open-add').onclick = () => addSheet(true);
+$('close-add').onclick = () => addSheet(false);
+$('add').addEventListener('click', (e) => { if (e.target === $('add')) addSheet(false); });
+$('add-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  let link = $('a-url').value.trim();
+  if (link && !/^https?:\/\//i.test(link)) link = `https://${link}`;
+  let host;
+  try { host = new URL(link).hostname.replace(/^www\./, ''); } catch {}
+  if (!host || !host.includes('.')) { $('a-error').hidden = false; $('a-url').focus(); return; }
+  const text = $('a-text').value.trim();
+  const at = Date.now();
+  const job = {
+    id: `manual:${at}`, manual: true, url: link,
+    title: $('a-title').value.trim(), company: $('a-company').value.trim() || 'Company not entered', location: $('a-location').value.trim(),
+    remote: /remote/i.test($('a-location').value), via: (SITES.find(([k]) => host.includes(k)) || [, host])[1],
+    firstSeen: new Date(at).toISOString(), text, snippet: text.slice(0, 220),
+  };
+  store.data.saved[job.id] = { at, job };
+  store.save();
+  addSheet(false);
+  state.tab = 'saved'; state.shown = PAGE;
+  render();
+  window.scrollTo(0, 0);
+});
+
+$('list').addEventListener('click', (e) => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const { act, id } = el.dataset;
+  const d = store.data;
+  const job = (state.feed?.jobs || []).find((j) => j.id === id) || d.saved[id]?.job || d.applied[id]?.job || d.hidden[id]?.job;
+  const keep = () => ({ at: Date.now(), job });
+  if (act === 'tailor') { tailor(job); return; }
+  if (act === 'apply') { state.asking = id; setTimeout(render, 400); return; } // the link itself opens the posting
+  if (act === 'save') d.saved[id] ? delete d.saved[id] : (d.saved[id] = keep());
+  if (act === 'hide') { d.hidden[id] = keep(); delete d.saved[id]; }
+  if (act === 'unhide') delete d.hidden[id];
+  if (act === 'applied') { d.applied[id] = keep(); state.asking = null; }
+  if (act === 'unapply') delete d.applied[id];
+  if (act === 'notyet') state.asking = null;
+  store.save();
+  render();
+});
+
+async function load() {
+  try {
+    const res = await fetch(`data/jobs.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    state.feed = await res.json();
+  } catch (err) {
+    $('status').textContent = 'Could not load postings';
+    $('notices').innerHTML = `<p class="notice bad">The postings file did not load (${esc(err.message)}). Check your connection and reload the page.</p>`;
+    state.feed = { jobs: [], origins: [], generatedAt: new Date().toISOString(), defaults: {} };
+    render();
+    return;
+  }
+  state.defaults = prefsToFilters(state.feed.defaults);
+  state.filters = { ...state.defaults, ...(store.data.filters || {}), query: '' };
+  renderMeta();
+  render();
+}
+load();
+</script>
+</body>
+</html>

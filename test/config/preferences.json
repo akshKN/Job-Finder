@@ -1,0 +1,32 @@
+{
+  "titleKeywords": [],
+  "keywords": [
+    "analyst",
+    "AS400"
+  ],
+  "excludeKeywords": [],
+  "locations": [
+    "Dallas"
+  ],
+  "includeRemote": true,
+  "remoteOnly": false,
+  "minSalary": 0,
+  "requireSalary": false,
+  "maxAgeDays": 30,
+  "levels": [],
+  "country": "us",
+  "skillKeywords": [
+    "AS400",
+    "AS/400",
+    "IBM i",
+    "RPGLE"
+  ],
+  "targetCompanies": [
+    {
+      "name": "Harbor & Vine",
+      "match": [
+        "Harbor"
+      ]
+    }
+  ]
+}
