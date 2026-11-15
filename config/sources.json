@@ -5,7 +5,7 @@
       "enabled": true,
       "minHours": 24,
       "datePosted": "week",
-      "queries": ["AS400 developer", "IBM i RPGLE developer", "iSeries RPG programmer"]
+      "queries": ["AS400 RPG developer remote", "IBM i iSeries developer remote", "AS400 IBM i developer in Dallas, TX"]
     },
     "remotive": { "enabled": true, "minHours": 8 },
     "jobicy": { "enabled": true, "minHours": 6 },
